@@ -47,5 +47,3 @@ tas-speedrun-64/
 
 Este proyecto está bajo la Licencia **MIT**. Desarrollado para la comunidad de speedrunning y romhacking de SM64.
 ---
-
-¡Sube estos archivos a tu nuevo repo `tas-speedrun-64` y vincúlalo a Vercel para que empiece a compilar la suite de telemetría e input display en vivo! 🚀⏱️
