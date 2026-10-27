@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TAS & Speedrun 64 - Workspace</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;600&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #06080c; color: #f8fafc; overflow: hidden; user-select: none; }
+        .font-pixel { font-family: 'Press Start 2P', cursive; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #1e2638; border-radius: 2px; }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col">
+
+    <!-- Top Bar -->
+    <header class="bg-[#0b0e17] border-b border-[#1e2638] px-4 py-2 flex items-center justify-between z-50">
+        <div class="flex items-center gap-3">
+            <a href="index.html" class="flex items-center gap-2 hover:opacity-80">
+                <i class="fa-solid fa-stopwatch text-red-500 text-base"></i>
+                <span class="font-pixel text-xs text-red-500">TAS 64</span>
+            </a>
+            <div class="h-4 w-px bg-[#1e2638]"></div>
+            <span id="rom-name" class="mono text-xs text-slate-400">Super Mario 64 (USA).z64</span>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <!-- Live Timer -->
+            <div class="bg-[#0f1420] border border-[#242e45] px-3 py-1 rounded-lg flex items-center gap-3">
+                <span class="text-[10px] text-slate-500 font-bold uppercase">RTA TIMER:</span>
+                <span id="timer-display" class="mono font-bold text-yellow-400 text-sm">00:00.000</span>
+                <button onclick="toggleTimer()" id="timer-btn" class="text-xs text-emerald-400 hover:text-white"><i class="fa-solid fa-play"></i></button>
+                <button onclick="resetTimer()" class="text-xs text-slate-500 hover:text-white"><i class="fa-solid fa-rotate-left"></i></button>
+            </div>
+
+            <button onclick="focusGame()" class="bg-red-600 hover:bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow">
+                <i class="fa-solid fa-keyboard mr-1"></i> Enfocar Teclado
+            </button>
+        </div>
+    </header>
+
+    <!-- Workspace -->
+    <div class="flex-grow flex overflow-hidden">
+        
+        <!-- Center Game Viewport + Overlays -->
+        <main class="flex-grow flex flex-col relative bg-black">
+            
+            <!-- Input Display Overlay -->
+            <div class="absolute bottom-4 left-4 bg-[#0b0e17]/90 backdrop-blur border border-[#1e2638] rounded-xl p-3 z-10 text-xs font-mono shadow-2xl">
+                <div class="text-[10px] text-slate-500 mb-2 font-bold uppercase border-b border-[#1e2638] pb-1">Input Display (N64 Pad)</div>
+                <div class="grid grid-cols-4 gap-2 text-center">
+                    <span id="btn-a" class="bg-[#141a29] border border-[#242e45] px-2 py-1 rounded text-slate-600">A</span>
+                    <span id="btn-b" class="bg-[#141a29] border border-[#242e45] px-2 py-1 rounded text-slate-600">B</span>
+                    <span id="btn-z" class="bg-[#141a29] border border-[#242e45] px-2 py-1 rounded text-slate-600">Z</span>
+                    <span id="btn-r" class="bg-[#141a29] border border-[#242e45] px-2 py-1 rounded text-slate-600">R</span>
+                </div>
+                <div class="mt-2 text-[10px] text-slate-400 flex justify-between">
+                    <span>JOYSTICK X/Y:</span>
+                    <span id="joy-pos" class="text-cyan-400">(0, 0)</span>
+                </div>
+            </div>
+
+            <!-- Frame Viewport -->
+            <div id="game-container" class="w-full h-full flex items-center justify-center cursor-pointer" onclick="focusGame()">
+                <iframe id="sm64-player" src="https://notan127.github.io/SM64-PC-Port-WebGL/" class="w-full h-full border-none" tabindex="0"></iframe>
+            </div>
+        </main>
+
+        <!-- Right Telemetry Panel -->
+        <aside class="w-80 bg-[#0b0e17] border-l border-[#1e2638] flex flex-col z-20">
+            <div class="p-3 border-b border-[#1e2638] font-bold text-xs uppercase text-slate-400 flex justify-between">
+                <span>Telemetría de Física SM64</span>
+                <i class="fa-solid fa-chart-line text-red-500"></i>
+            </div>
+
+            <div class="p-4 space-y-4 text-xs font-mono flex-grow overflow-y-auto">
+                <!-- Position Telemetry -->
+                <div class="bg-[#0f1420] p-3 rounded-xl border border-[#1e2638] space-y-2">
+                    <span class="text-slate-400 text-[10px] block font-bold">POSICIÓN ABSOLUTA (RAM)</span>
+                    <div class="grid grid-cols-3 gap-2 text-center">
+                        <div class="bg-[#06080c] p-1.5 rounded border border-[#1e2638]">
+                            <span class="text-[9px] text-slate-500 block">X</span>
+                            <span id="tele-x" class="text-white">0.00</span>
+                        </div>
+                        <div class="bg-[#06080c] p-1.5 rounded border border-[#1e2638]">
+                            <span class="text-[9px] text-slate-500 block">Y</span>
+                            <span id="tele-y" class="text-white">307.00</span>
+                        </div>
+                        <div class="bg-[#06080c] p-1.5 rounded border border-[#1e2638]">
+                            <span class="text-[9px] text-slate-500 block">Z</span>
+                            <span id="tele-z" class="text-white">0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Speed Metrics -->
+                <div class="bg-[#0f1420] p-3 rounded-xl border border-[#1e2638] space-y-2">
+                    <span class="text-slate-400 text-[10px] block font-bold">MÉTRICAS DE VELOCIDAD</span>
+                    <div class="space-y-1">
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Horizontal Speed:</span>
+                            <span id="tele-hspeed" class="text-emerald-400">0.00 units/f</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Vertical Speed:</span>
+                            <span id="tele-vspeed" class="text-cyan-400">0.00 units/f</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Angle Yaw:</span>
+                            <span id="tele-yaw" class="text-yellow-400">0°</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAS Script Load -->
+                <div class="bg-[#0f1420] p-3 rounded-xl border border-[#1e2638] space-y-2">
+                    <span class="text-slate-400 text-[10px] block font-bold">SCRIPT TAS (INPUT SEQUENCE)</span>
+                    <textarea class="w-full h-24 bg-[#06080c] border border-[#1e2638] rounded p-2 text-[10px] text-cyan-400 focus:outline-none" placeholder="// Formato TAS: FRAME | STICK_X STICK_Y | BUTTONS&#10;1 | 0 127 | A B"></textarea>
+                    <button onclick="logConsole('Secuencia TAS cargada en búfer')" class="w-full bg-red-600 hover:bg-red-500 text-white py-1.5 rounded font-bold">Ejecutar TAS</button>
+                </div>
+            </div>
+
+            <!-- Console Log -->
+            <div class="p-3 border-t border-[#1e2638] bg-[#06080c] font-mono text-[10px] h-28 overflow-y-auto" id="console-logs">
+                <div class="text-emerald-400">[SYSTEM]: Telemetry engine hooked.</div>
+                <div class="text-slate-500">[TAS]: Listo para capturar secuencias.</div>
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        const playerFrame = document.getElementById('sm64-player');
+        const consoleLogs = document.getElementById('console-logs');
+        
+        let timerRunning = false;
+        let timerStart = 0;
+        let timerInterval;
+
+        function focusGame() {
+            try { playerFrame.contentWindow.focus(); } catch(e) {}
+            playerFrame.focus();
+            logConsole("Foco transferido al emulador de TAS.");
+        }
+
+        function logConsole(msg) {
+            const div = document.createElement('div');
+            div.textContent = `[${new Date().toLocaleTimeString().split(' ')[0]}] ${msg}`;
+            consoleLogs.appendChild(div);
+            consoleLogs.scrollTop = consoleLogs.scrollHeight;
+        }
+
+        function toggleTimer() {
+            if(!timerRunning) {
+                timerRunning = true;
+                timerStart = Date.now();
+                timerInterval = setInterval(updateTimer, 10);
+                document.getElementById('timer-btn').innerHTML = '<i class="fa-solid fa-pause"></i>';
+            } else {
+                timerRunning = false;
+                clearInterval(timerInterval);
+                document.getElementById('timer-btn').innerHTML = '<i class="fa-solid fa-play"></i>';
+            }
+        }
+
+        function resetTimer() {
+            timerRunning = false;
+            clearInterval(timerInterval);
+            document.getElementById('timer-display').textContent = '00:00.000';
+            document.getElementById('timer-btn').innerHTML = '<i class="fa-solid fa-play"></i>';
+        }
+
+        function updateTimer() {
+            const diff = Date.now() - timerStart;
+            const ms = Math.floor((diff % 1000)).toString().padStart(3, '0');
+            const sec = Math.floor((diff / 1000) % 60).toString().padStart(2, '0');
+            const min = Math.floor((diff / (1000 * 60))).toString().padStart(2, '0');
+            document.getElementById('timer-display').textContent = `${min}:${sec}.${ms}`;
+        }
+
+        window.onload = () => { setTimeout(focusGame, 1000); };
+    </script>
+</body>
+</html>
